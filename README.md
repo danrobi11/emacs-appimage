@@ -1,5 +1,7 @@
 # Unofficial Emacs Appimage
 
+![emacs.png](https://www.gnu.org/software/emacs/images/emacs.png)
+
 ## Dependencies for Building Emacs AppImage
 
 Below are the complete dependencies required to build `emacs-30.1-x86_64.AppImage` on Debian Sid as of **March 18, 2025**.
