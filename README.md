@@ -2,6 +2,31 @@
 
 ![emacs.png](https://www.gnu.org/software/emacs/images/emacs.png)
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/danrobi11/emacs-appimage/actions)  
+Welcome to the unofficial Emacs AppImage—a portable, terminal-only build of [Emacs 30.1](https://www.gnu.org/software/emacs/), crafted for Debian Sid and beyond. This AppImage is designed to run anywhere on Linux with no sandbox restrictions, no `emacsclient`, and a full system `PATH`—making it the most versatile Emacs AppImage available!
+
+## Features
+- **Portable**: Single executable, no installation required—just download and run.
+- **Terminal-Only**: Built with `--without-x` for a lean, TUI-focused experience.
+- **No Sandbox**: Full system access, no isolation constraints.
+- **No emacsclient**: Client-server functionality disabled for simplicity.
+- **Full PATH**: Preserves system paths (`/bin`, `/usr/bin`, etc.) for seamless command access (e.g., `dircolors`, `xdg-user-dir`).
+- **Bundled Utilities**: Includes `etags`, `ctags`, `ebrowse`, and more.
+
+## Usage
+
+1. **Download the AppImage**:
+   - Grab it from the [Releases page](https://github.com/danrobi11/emacs-appimage/releases).
+
+2. **Make it Executable**:
+   ```bash
+   chmod +x emacs-30.1-x86_64.AppImage
+
+## Acknowledgments
+
+- Emacs - The legendary editor that powers this project.
+- linuxdeployqt & AppImageKit - Tools that made packaging possible.
+
 ## Dependencies for Building Emacs AppImage
 
 Below are the complete dependencies required to build `emacs-30.1-x86_64.AppImage` on Debian Sid as of **March 18, 2025**.
