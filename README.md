@@ -1,4 +1,4 @@
-# Unofficial Emacs Appimage
+# Unofficial Emacs 30.1 Appimage
 
 ![emacs.png](https://www.gnu.org/software/emacs/images/emacs.png)
 
