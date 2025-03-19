@@ -71,6 +71,13 @@ make install
 # Remove emacsclient to disable it
 rm -f "$APPDIR/usr/bin/emacsclient"
 
+# Bundle additional data files (avoid redundant copies)
+echo "Bundling Emacs data files..."
+mkdir -p "$APPDIR/usr/share/emacs/$VERSION"
+[ -d "$APPDIR/usr/libexec/emacs" ] || cp -r "$APPDIR/usr/libexec" "$APPDIR/usr/"
+[ -d "$APPDIR/usr/share/emacs/$VERSION/etc" ] || cp -r "$APPDIR/usr/share/emacs/$VERSION/etc" "$APPDIR/usr/share/emacs/$VERSION/"
+[ -d "$APPDIR/usr/share/emacs/$VERSION/lisp" ] || cp -r "$APPDIR/usr/share/emacs/$VERSION/lisp" "$APPDIR/usr/share/emacs/$VERSION/"
+
 # Bundle libraries
 echo "Bundling libraries..."
 mkdir -p "$APPDIR/usr/lib"
@@ -81,7 +88,7 @@ for lib in \
     libcap.so.2 libicudata.so.76 libicuuc.so.76 libffi.so.8 \
     libattr.so.1 liblzma.so.5 libdbus-1.so.3 libp11-kit.so.0 \
     libselinux.so.1 libidn2.so.0 libc.so.6 libm.so.6 libdl.so.2 \
-    libpthread.so.0 librt.so.1; do
+    libpthread.so.0 librt.so.1 libacl.so.1 libsystemd.so.0; do
     cp -v /usr/lib/x86_64-linux-gnu/$lib "$APPDIR/usr/lib/" 2>/dev/null || \
     cp -v /lib/x86_64-linux-gnu/$lib "$APPDIR/usr/lib/" 2>/dev/null || \
     echo "Warning: $lib not found; may need manual addition."
@@ -90,16 +97,27 @@ done
 # Create home/bin directory
 mkdir -p "$APPDIR/home/bin"
 
-# Create AppRun with preserved system PATH, explicit system paths, and debug output
+# Create AppRun with environment variables and debug output
 echo "Creating AppRun with custom PATH and terminal enforcement..."
 cat << EOF > "$APPDIR/AppRun"
 #!/bin/bash
 HERE="\$(dirname "\$(readlink -f "\${0}")")"
 export PATH="\$HERE/usr/local/bin:\$HERE/usr/bin:\$HERE/bin:\$HERE/usr/games:\$HERE/sbin:\$HERE/usr/sbin:\$HERE/home/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:\$PATH"
 export LD_LIBRARY_PATH="\$HERE/usr/lib:\$LD_LIBRARY_PATH"
+export EMACSDATA="\$HERE/usr/share/emacs/$VERSION/etc"
+export EMACSLOADPATH="\$HERE/usr/share/emacs/$VERSION/lisp"
+export EMACSDOC="\$HERE/usr/share/emacs/$VERSION/etc"
 echo "Starting Emacs..." >> "$LOGFILE"
 echo "PATH: \$PATH" >> "$LOGFILE"
 echo "LD_LIBRARY_PATH: \$LD_LIBRARY_PATH" >> "$LOGFILE"
+echo "EMACSDATA: \$EMACSDATA" >> "$LOGFILE"
+echo "EMACSLOADPATH: \$EMACSLOADPATH" >> "$LOGFILE"
+echo "EMACSDOC: \$EMACSDOC" >> "$LOGFILE"
+echo "Checking data directory contents at \$HERE/usr/share/emacs/$VERSION..." >> "$LOGFILE"
+ls -l "\$HERE/usr/share/emacs/$VERSION" >> "$LOGFILE" 2>&1
+ls -l "\$HERE/usr/share/emacs/$VERSION/etc" >> "$LOGFILE" 2>&1
+ls -l "\$HERE/usr/share/emacs/$VERSION/lisp" >> "$LOGFILE" 2>&1
+ls -l "\$HERE/usr/libexec/emacs/$VERSION" >> "$LOGFILE" 2>&1
 echo "Checking dependencies..." >> "$LOGFILE"
 ldd "\$HERE/usr/bin/emacs" >> "$LOGFILE" 2>&1
 if [ -t 0 ]; then
@@ -147,4 +165,5 @@ echo "Cleaning up..."
 # rm -rf "$WORKDIR"
 
 echo "Done! Your Emacs AppImage is at: $OUTPUT"
-echo "Check the debug log at $LOGFILE if needed."
+echo "Check the debug log at $LOGFILE if
+needed."
