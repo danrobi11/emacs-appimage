@@ -79,16 +79,37 @@ libselinux1-dev libidn2-dev libfuse3-dev fuse3 xterm
 
 ### Runtime Libraries (Bundled)
 
-These libraries from `/usr/lib/x86_64-linux-gnu/` or `/lib/x86_64-linux-gnu/` are included in `$APPDIR/usr/lib/` to ensure portability:
+These libraries are copied into `$APPDIR/usr/lib/` to ensure the AppImage runs standalone. They’re sourced from `/usr/lib/x86_64-linux-gnu/` or `/lib/x86_64-linux-gnu/`:
 
-```
-libncurses.so.6, libgnutls.so.30, libxml2.so.2, libjansson.so.4, libpcre2-8.so.0,
-libsqlite3.so.0, libz.so.1, libtinfo.so.6, libunistring.so.5, libtasn1.so.6,
-libnettle.so.8, libhogweed.so.6, libcap.so.2, libicudata.so.76, libicuuc.so.76,
-libffi.so.8, libattr.so.1, liblzma.so.5, libdbus-1.so.3, libp11-kit.so.0,
-libselinux.so.1, libidn2.so.0, libc.so.6, libm.so.6, libdl.so.2,
-libpthread.so.0, librt.so.1
-```
+- `libncurses.so.6` - Terminal handling.
+- `libgnutls.so.30` - TLS/SSL support.
+- `libxml2.so.2` - XML parsing.
+- `libjansson.so.4` - JSON support.
+- `libpcre2-8.so.0` - Regular expressions.
+- `libsqlite3.so.0` - SQLite database.
+- `libz.so.1` - Compression.
+- `libtinfo.so.6` - Terminal info (part of ncurses).
+- `libunistring.so.5` - Unicode string handling.
+- `libtasn1.so.6` - ASN.1 parsing (for GnuTLS).
+- `libnettle.so.8` - Cryptographic functions.
+- `libhogweed.so.6` - More crypto (part of nettle).
+- `libcap.so.2` - POSIX capabilities.
+- `libicudata.so.76` - ICU data.
+- `libicuuc.so.76` - ICU Unicode support.
+- `libffi.so.8` - Foreign Function Interface.
+- `libattr.so.1` - File attributes.
+- `liblzma.so.5` - XZ compression.
+- `libdbus-1.so.3` - D-Bus messaging.
+- `libp11-kit.so.0` - PKCS#11 support (for GnuTLS).
+- `libselinux.so.1` - SELinux integration.
+- `libidn2.so.0` - Internationalized domain names.
+- `libc.so.6` - C standard library.
+- `libm.so.6` - Math library.
+- `libdl.so.2` - Dynamic linking.
+- `libpthread.so.0` - POSIX threads.
+- `librt.so.1` - Realtime extensions.
+- `libacl.so.1` - Access control list support.
+- `libsystemd.so.0` - Systemd integration.
 
 ### Additional Tools
 
