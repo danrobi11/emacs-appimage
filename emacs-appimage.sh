@@ -10,7 +10,8 @@ VERSION="30.1"  # Emacs 30.1
 WORKDIR="$HOME/appimage-workdir"
 APPDIR="$WORKDIR/$APP.AppDir"
 OUTPUT="$HOME/$APP-$VERSION-x86_64.AppImage"
-LOGFILE="$HOME/emacs-appimage-run.log"
+# Use user's home directory for log file, not hardcoded /home/danrobi
+LOGFILE="\$HOME/emacs-appimage-run.log"
 SOURCE_TARBALL="https://mirrors.ocf.berkeley.edu/gnu/emacs/emacs-$VERSION.tar.gz"
 
 # Clean up previous workdir
@@ -97,38 +98,40 @@ done
 # Create home/bin directory
 mkdir -p "$APPDIR/home/bin"
 
-# Create AppRun with environment variables and debug output
+# Create AppRun with dynamic log path and debug output
 echo "Creating AppRun with custom PATH and terminal enforcement..."
 cat << EOF > "$APPDIR/AppRun"
 #!/bin/bash
 HERE="\$(dirname "\$(readlink -f "\${0}")")"
 export PATH="\$HERE/usr/local/bin:\$HERE/usr/bin:\$HERE/bin:\$HERE/usr/games:\$HERE/sbin:\$HERE/usr/sbin:\$HERE/home/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:\$PATH"
 export LD_LIBRARY_PATH="\$HERE/usr/lib:\$LD_LIBRARY_PATH"
+LOGFILE="\$HOME/emacs-appimage-run.log"
 export EMACSDATA="\$HERE/usr/share/emacs/$VERSION/etc"
 export EMACSLOADPATH="\$HERE/usr/share/emacs/$VERSION/lisp"
 export EMACSDOC="\$HERE/usr/share/emacs/$VERSION/etc"
-echo "Starting Emacs..." >> "$LOGFILE"
-echo "PATH: \$PATH" >> "$LOGFILE"
-echo "LD_LIBRARY_PATH: \$LD_LIBRARY_PATH" >> "$LOGFILE"
-echo "EMACSDATA: \$EMACSDATA" >> "$LOGFILE"
-echo "EMACSLOADPATH: \$EMACSLOADPATH" >> "$LOGFILE"
-echo "EMACSDOC: \$EMACSDOC" >> "$LOGFILE"
-echo "Checking data directory contents at \$HERE/usr/share/emacs/$VERSION..." >> "$LOGFILE"
-ls -l "\$HERE/usr/share/emacs/$VERSION" >> "$LOGFILE" 2>&1
-ls -l "\$HERE/usr/share/emacs/$VERSION/etc" >> "$LOGFILE" 2>&1
-ls -l "\$HERE/usr/share/emacs/$VERSION/lisp" >> "$LOGFILE" 2>&1
-ls -l "\$HERE/usr/libexec/emacs/$VERSION" >> "$LOGFILE" 2>&1
-echo "Checking dependencies..." >> "$LOGFILE"
-ldd "\$HERE/usr/bin/emacs" >> "$LOGFILE" 2>&1
+echo "Starting Emacs..." >> "\$LOGFILE"
+echo "PATH: \$PATH" >> "\$LOGFILE"
+echo "LD_LIBRARY_PATH: \$LD_LIBRARY_PATH" >> "\$LOGFILE"
+echo "LOGFILE: \$LOGFILE" >> "\$LOGFILE"
+echo "EMACSDATA: \$EMACSDATA" >> "\$LOGFILE"
+echo "EMACSLOADPATH: \$EMACSLOADPATH" >> "\$LOGFILE"
+echo "EMACSDOC: \$EMACSDOC" >> "\$LOGFILE"
+echo "Checking data directory contents at \$HERE/usr/share/emacs/$VERSION..." >> "\$LOGFILE"
+ls -l "\$HERE/usr/share/emacs/$VERSION" >> "\$LOGFILE" 2>&1
+ls -l "\$HERE/usr/share/emacs/$VERSION/etc" >> "\$LOGFILE" 2>&1
+ls -l "\$HERE/usr/share/emacs/$VERSION/lisp" >> "\$LOGFILE" 2>&1
+ls -l "\$HERE/usr/libexec/emacs/$VERSION" >> "\$LOGFILE" 2>&1
+echo "Checking dependencies..." >> "\$LOGFILE"
+ldd "\$HERE/usr/bin/emacs" >> "\$LOGFILE" 2>&1
 if [ -t 0 ]; then
-    echo "Running in existing terminal..." >> "$LOGFILE"
-    "\$HERE/usr/bin/emacs" "\$@" >> "$LOGFILE" 2>&1
+    echo "Running in existing terminal..." >> "\$LOGFILE"
+    "\$HERE/usr/bin/emacs" "\$@" >> "\$LOGFILE" 2>&1
 else
-    echo "No TTY detected; launching in xterm..." >> "$LOGFILE"
-    xterm -e "\$HERE/usr/bin/emacs" "\$@" >> "$LOGFILE" 2>&1
+    echo "No TTY detected; launching in xterm..." >> "\$LOGFILE"
+    xterm -e "\$HERE/usr/bin/emacs" "\$@" >> "\$LOGFILE" 2>&1
 fi
 EXIT_CODE=\$?
-echo "Emacs exited with code \$EXIT_CODE" >> "$LOGFILE"
+echo "Emacs exited with code \$EXIT_CODE" >> "\$LOGFILE"
 exit \$EXIT_CODE
 EOF
 chmod +x "$APPDIR/AppRun"
@@ -165,5 +168,4 @@ echo "Cleaning up..."
 # rm -rf "$WORKDIR"
 
 echo "Done! Your Emacs AppImage is at: $OUTPUT"
-echo "Check the debug log at $LOGFILE if
-needed."
+echo "Check the debug log at \$HOME/emacs-appimage-run.log"
