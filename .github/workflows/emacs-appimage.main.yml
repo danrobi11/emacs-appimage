@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04  # Switch to glibc 2.31
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
