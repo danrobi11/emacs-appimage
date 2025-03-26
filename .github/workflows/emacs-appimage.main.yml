@@ -31,7 +31,7 @@ jobs:
         run: |
           git clone https://git.savannah.gnu.org/git/emacs.git
           cd emacs
-          git checkout emacs-30.1  # Match your log
+          git checkout emacs-30.1
 
       - name: Build Emacs
         run: |
@@ -67,7 +67,7 @@ jobs:
             libcap.so.2 libicudata.so.66 libicuuc.so.66 libffi.so.7 \
             libattr.so.1 liblzma.so.5 libdbus-1.so.3 libp11-kit.so.0 \
             libselinux.so.1 libidn2.so.0 libm.so.6 libdl.so.2 \
-            libpthread.so.0 librt.so.1 libacl.so.1 libsystemd.so.0 \
+            librt.so.1 libacl.so.1 libsystemd.so.0 \
             libgmp.so.10 libgio-2.0.so.0 libglib-2.0.so.0 \
             libgmodule-2.0.so.0 libgobject-2.0.so.0 libgpg-error.so.0; do
             cp -v /usr/lib/x86_64-linux-gnu/$lib /tmp/appdir/usr/lib/ 2>/dev/null || \
