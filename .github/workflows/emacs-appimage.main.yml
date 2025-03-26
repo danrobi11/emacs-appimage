@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04  # Switch to glibc 2.31
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,55 +17,106 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential git wget \
-            autoconf automake libtool pkg-config make \
-            libgtk-3-dev libglib2.0-dev libx11-dev \
-            libncurses-dev libxml2-dev libjansson-dev \
-            libxpm-dev libgif-dev libgnutls28-dev \
-            fuse libfuse2 xterm
+          sudo apt install -y \
+            build-essential git wget libfuse3-dev \
+            libncurses-dev libgnutls28-dev \
+            libxml2-dev libjansson-dev libpcre2-dev \
+            libsqlite3-dev zlib1g-dev texinfo \
+            nettle-dev libhogweed6 libcap-dev \
+            libicu-dev libffi-dev libattr1-dev liblzma-dev libdbus-1-dev libselinux1-dev libidn2-dev \
+            xterm
 
       - name: Clone Emacs source
         run: |
           git clone https://git.savannah.gnu.org/git/emacs.git
           cd emacs
-          git checkout emacs-29.4  # Latest stable as of March 2025
+          git checkout emacs-30.1  # Match your VERSION=30.1
+
+      - name: Download tools
+        run: |
+          wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage" -O linuxdeployqt
+          wget -c "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage" -O appimagetool
+          chmod +x linuxdeployqt appimagetool
 
       - name: Build Emacs
         run: |
           cd emacs
           ./autogen.sh
-          ./configure --prefix=/tmp/appdir/usr --with-x-toolkit=gtk3 --with-x
+          ./configure \
+            --with-sound=no \
+            --with-native-compilation=no \
+            --without-imagemagick \
+            --without-mailutils \
+            --with-gnutls \
+            --without-x \
+            --prefix=/tmp/appdir/usr
+          make bootstrap
           make -j$(nproc)
           make install
+          rm -f /tmp/appdir/usr/bin/emacsclient  # Explicitly remove emacsclient
+
+      - name: Bundle additional data files
+        run: |
+          mkdir -p /tmp/appdir/usr/share/emacs/30.1
+          cp -r /tmp/appdir/usr/libexec /tmp/appdir/usr/ || true
+          cp -r /tmp/appdir/usr/share/emacs/30.1/etc /tmp/appdir/usr/share/emacs/30.1/ || true
+          cp -r /tmp/appdir/usr/share/emacs/30.1/lisp /tmp/appdir/usr/share/emacs/30.1/ || true
 
       - name: Bundle libraries
         run: |
           mkdir -p /tmp/appdir/usr/lib
           for lib in \
-            libgtk-3.so.0 libgdk-3.so.0 libglib-2.0.so.0 libgobject-2.0.so.0 \
-            libgmodule-2.0.so.0 libpango-1.0.so.0 libpangocairo-1.0.so.0 \
-            libcairo.so.2 libX11.so.6 libncursesw.so.6 libxml2.so.2 \
-            libjansson.so.4 libXpm.so.4 libgif.so.7 libgnutls.so.30 \
-            libc.so.6 ld-linux-x86-64.so.2; do
+            libncurses.so.6 libgnutls.so.30 libxml2.so.2 libjansson.so.4 \
+            libpcre2-8.so.0 libsqlite3.so.0 libz.so.1 libtinfo.so.6 \
+            libunistring.so.2 libtasn1.so.6 libnettle.so.7 libhogweed.so.5 \
+            libcap.so.2 libicudata.so.66 libicuuc.so.66 libffi.so.7 \
+            libattr.so.1 liblzma.so.5 libdbus-1.so.3 libp11-kit.so.0 \
+            libselinux.so.1 libidn2.so.0 libc.so.6 libm.so.6 libdl.so.2 \
+            libpthread.so.0 librt.so.1 libacl.so.1 libsystemd.so.0; do
             cp -v /usr/lib/x86_64-linux-gnu/$lib /tmp/appdir/usr/lib/ 2>/dev/null || \
             cp -v /lib/x86_64-linux-gnu/$lib /tmp/appdir/usr/lib/ 2>/dev/null || \
-            echo "Warning: $lib not found"
+            echo "Warning: $lib not found; may need manual addition."
           done
 
-      - name: Download linuxdeployqt and appimagetool
+      - name: Create home/bin directory
         run: |
-          wget -c https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -O linuxdeployqt
-          wget -c https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
-          chmod +x linuxdeployqt appimagetool
+          mkdir -p /tmp/appdir/home/bin
 
       - name: Create AppRun
         run: |
           cat << 'EOF' > /tmp/appdir/AppRun
           #!/bin/bash
           HERE="$(dirname "$(readlink -f "${0}")")"
-          export PATH="$HERE/usr/bin:$PATH"
+          export PATH="$HERE/usr/local/bin:$HERE/usr/bin:$HERE/bin:$HERE/usr/games:$HERE/sbin:$HERE/usr/sbin:$HERE/home/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:$PATH"
           export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
-          "$HERE/usr/lib/ld-linux-x86-64.so.2" "$HERE/usr/bin/emacs" "$@"
+          LOGFILE="$HOME/emacs-appimage-run.log"
+          export EMACSDATA="$HERE/usr/share/emacs/30.1/etc"
+          export EMACSLOADPATH="$HERE/usr/share/emacs/30.1/lisp"
+          export EMACSDOC="$HERE/usr/share/emacs/30.1/etc"
+          echo "Starting Emacs..." >> "$LOGFILE"
+          echo "PATH: $PATH" >> "$LOGFILE"
+          echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH" >> "$LOGFILE"
+          echo "LOGFILE: $LOGFILE" >> "$LOGFILE"
+          echo "EMACSDATA: $EMACSDATA" >> "$LOGFILE"
+          echo "EMACSLOADPATH: $EMACSLOADPATH" >> "$LOGFILE"
+          echo "EMACSDOC: $EMACSDOC" >> "$LOGFILE"
+          echo "Checking data directory contents at $HERE/usr/share/emacs/30.1..." >> "$LOGFILE"
+          ls -l "$HERE/usr/share/emacs/30.1" >> "$LOGFILE" 2>&1
+          ls -l "$HERE/usr/share/emacs/30.1/etc" >> "$LOGFILE" 2>&1
+          ls -l "$HERE/usr/share/emacs/30.1/lisp" >> "$LOGFILE" 2>&1
+          ls -l "$HERE/usr/libexec/emacs/30.1" >> "$LOGFILE" 2>&1
+          echo "Checking dependencies..." >> "$LOGFILE"
+          ldd "$HERE/usr/bin/emacs" >> "$LOGFILE" 2>&1
+          if [ -t 0 ]; then
+            echo "Running in existing terminal..." >> "$LOGFILE"
+            "$HERE/usr/bin/emacs" "$@" >> "$LOGFILE" 2>&1
+          else
+            echo "No TTY detected; launching in xterm..." >> "$LOGFILE"
+            xterm -e "$HERE/usr/bin/emacs" "$@" >> "$LOGFILE" 2>&1
+          fi
+          EXIT_CODE=$?
+          echo "Emacs exited with code $EXIT_CODE" >> "$LOGFILE"
+          exit $EXIT_CODE
           EOF
           chmod +x /tmp/appdir/AppRun
 
@@ -73,33 +124,29 @@ jobs:
         run: |
           cat << 'EOF' > /tmp/appdir/emacs.desktop
           [Desktop Entry]
-          Name=Emacs
+          Name=Emacs (Terminal)
           Exec=emacs
           Type=Application
           Icon=emacs
-          Categories=Development;TextEditor;
-          Terminal=false
+          Categories=Utility;TextEditor;TerminalEmulator;
+          Terminal=true
           EOF
 
       - name: Copy icon
         run: |
-          mkdir -p /tmp/appdir/usr/share/icons/hicolor/48x48/apps
-          cp /tmp/appdir/usr/share/emacs/29.4/etc/images/icons/hicolor/48x48/apps/emacs.png \
-             /tmp/appdir/usr/share/icons/hicolor/48x48/apps/ 2>/dev/null || \
-          wget -O /tmp/appdir/emacs.png "https://www.gnu.org/software/emacs/images/emacs.png" || echo "Icon download failed"
-          cp /tmp/appdir/emacs.png /tmp/appdir/usr/share/icons/hicolor/48x48/apps/emacs.png || true
-          chmod 644 /tmp/appdir/emacs.png /tmp/appdir/usr/share/icons/hicolor/48x48/apps/emacs.png || true
+          wget -O /tmp/appdir/emacs.png "https://upload.wikimedia.org/wikipedia/commons/5/51/Emacs-logo.png" || echo "Icon download failed"
+          chmod 644 /tmp/appdir/emacs.png
 
       - name: Bundle with linuxdeployqt
         run: |
-          ./linuxdeployqt /tmp/appdir/usr/bin/emacs -bundle-non-qt-libs -verbose=2
+          ./linuxdeployqt /tmp/appdir/usr/bin/emacs -bundle-non-qt-libs -unsupported-allow-new-glibc -verbose=2
 
       - name: Package AppImage
         run: |
-          ./appimagetool --no-appstream -v /tmp/appdir emacs-29.4-x86_64.AppImage
+          ./appimagetool --no-appstream -v /tmp/appdir emacs-30.1-x86_64.AppImage
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
           name: emacs-appimage
-          path: emacs-29.4-x86_64.AppImage
+          path: emacs-30.1-x86_64.AppImage
