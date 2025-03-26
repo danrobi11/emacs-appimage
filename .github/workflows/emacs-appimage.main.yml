@@ -1,8 +1,3 @@
-Collapse
-
-Wrap
-
-Copy
 name: Build Emacs AppImage
 
 on:
