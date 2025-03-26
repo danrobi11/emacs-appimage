@@ -30,7 +30,7 @@ jobs:
         run: |
           git clone https://git.savannah.gnu.org/git/emacs.git
           cd emacs
-          git checkout emacs-30.1  # Match your VERSION=30.1
+          git checkout emacs-29.4  # Stable as of March 2025; adjust to 30.1 if confirmed
 
       - name: Download tools
         run: |
@@ -57,10 +57,10 @@ jobs:
 
       - name: Bundle additional data files
         run: |
-          mkdir -p /tmp/appdir/usr/share/emacs/30.1
+          mkdir -p /tmp/appdir/usr/share/emacs/29.4
           cp -r /tmp/appdir/usr/libexec /tmp/appdir/usr/ || true
-          cp -r /tmp/appdir/usr/share/emacs/30.1/etc /tmp/appdir/usr/share/emacs/30.1/ || true
-          cp -r /tmp/appdir/usr/share/emacs/30.1/lisp /tmp/appdir/usr/share/emacs/30.1/ || true
+          cp -r /tmp/appdir/usr/share/emacs/29.4/etc /tmp/appdir/usr/share/emacs/29.4/ || true
+          cp -r /tmp/appdir/usr/share/emacs/29.4/lisp /tmp/appdir/usr/share/emacs/29.4/ || true
 
       - name: Bundle libraries
         run: |
@@ -75,7 +75,7 @@ jobs:
             libpthread.so.0 librt.so.1 libacl.so.1 libsystemd.so.0; do
             cp -v /usr/lib/x86_64-linux-gnu/$lib /tmp/appdir/usr/lib/ 2>/dev/null || \
             cp -v /lib/x86_64-linux-gnu/$lib /tmp/appdir/usr/lib/ 2>/dev/null || \
-            echo "Warning: $lib not found; may need manual addition."
+            echo "Warning: $lib not found"
           done
 
       - name: Create home/bin directory
@@ -90,9 +90,9 @@ jobs:
           export PATH="$HERE/usr/local/bin:$HERE/usr/bin:$HERE/bin:$HERE/usr/games:$HERE/sbin:$HERE/usr/sbin:$HERE/home/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:$PATH"
           export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
           LOGFILE="$HOME/emacs-appimage-run.log"
-          export EMACSDATA="$HERE/usr/share/emacs/30.1/etc"
-          export EMACSLOADPATH="$HERE/usr/share/emacs/30.1/lisp"
-          export EMACSDOC="$HERE/usr/share/emacs/30.1/etc"
+          export EMACSDATA="$HERE/usr/share/emacs/29.4/etc"
+          export EMACSLOADPATH="$HERE/usr/share/emacs/29.4/lisp"
+          export EMACSDOC="$HERE/usr/share/emacs/29.4/etc"
           echo "Starting Emacs..." >> "$LOGFILE"
           echo "PATH: $PATH" >> "$LOGFILE"
           echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH" >> "$LOGFILE"
@@ -100,11 +100,11 @@ jobs:
           echo "EMACSDATA: $EMACSDATA" >> "$LOGFILE"
           echo "EMACSLOADPATH: $EMACSLOADPATH" >> "$LOGFILE"
           echo "EMACSDOC: $EMACSDOC" >> "$LOGFILE"
-          echo "Checking data directory contents at $HERE/usr/share/emacs/30.1..." >> "$LOGFILE"
-          ls -l "$HERE/usr/share/emacs/30.1" >> "$LOGFILE" 2>&1
-          ls -l "$HERE/usr/share/emacs/30.1/etc" >> "$LOGFILE" 2>&1
-          ls -l "$HERE/usr/share/emacs/30.1/lisp" >> "$LOGFILE" 2>&1
-          ls -l "$HERE/usr/libexec/emacs/30.1" >> "$LOGFILE" 2>&1
+          echo "Checking data directory contents at $HERE/usr/share/emacs/29.4..." >> "$LOGFILE"
+          ls -l "$HERE/usr/share/emacs/29.4" >> "$LOGFILE" 2>&1
+          ls -l "$HERE/usr/share/emacs/29.4/etc" >> "$LOGFILE" 2>&1
+          ls -l "$HERE/usr/share/emacs/29.4/lisp" >> "$LOGFILE" 2>&1
+          ls -l "$HERE/usr/libexec/emacs/29.4" >> "$LOGFILE" 2>&1
           echo "Checking dependencies..." >> "$LOGFILE"
           ldd "$HERE/usr/bin/emacs" >> "$LOGFILE" 2>&1
           if [ -t 0 ]; then
@@ -143,10 +143,10 @@ jobs:
 
       - name: Package AppImage
         run: |
-          ./appimagetool --no-appstream -v /tmp/appdir emacs-30.1-x86_64.AppImage
+          ./appimagetool --no-appstream -v /tmp/appdir emacs-29.4-x86_64.AppImage
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
           name: emacs-appimage
-          path: emacs-30.1-x86_64.AppImage
+          path: emacs-29.4-x86_64.AppImage
