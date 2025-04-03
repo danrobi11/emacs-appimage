@@ -27,15 +27,15 @@ jobs:
             liblzma-dev libdbus-1-dev libselinux1-dev libidn2-dev \
             libgpg-error-dev glib-networking xterm
 
-      - name: Clone Emacs source
+      - name: Download and extract Emacs source
         run: |
-          git clone https://git.savannah.gnu.org/git/emacs.git
-          cd emacs
-          git checkout emacs-30.1
+          wget https://mirror2.evolution-host.com/gnu/emacs/emacs-30.1.tar.xz
+          tar -xJf emacs-30.1.tar.xz
+          cd emacs-30.1
 
       - name: Build Emacs
         run: |
-          cd emacs
+          cd emacs-30.1
           ./autogen.sh
           ./configure \
             --prefix=/tmp/appdir/usr \
@@ -92,7 +92,7 @@ jobs:
           #!/bin/bash
           HERE="$(dirname "$(readlink -f "${0}")")"
           export PATH="$HERE/usr/local/bin:$HERE/usr/bin:$HERE/bin:$HERE/usr/games:$HERE/sbin:$HERE/usr/sbin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:$PATH"
-          export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
+          export LD_LIBRARY_PATH="$HERE/usr/lib"
           export GIO_MODULE_DIR="$HERE/usr/lib"
           LOGFILE="$HOME/emacs-appimage-run.log"
           export EMACSDATA="$HERE/usr/share/emacs/30.1/etc"
@@ -104,9 +104,9 @@ jobs:
           echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH" >> "$LOGFILE"
           echo "GIO_MODULE_DIR: $GIO_MODULE_DIR" >> "$LOGFILE"
           echo "Checking dependencies..." >> "$LOGFILE"
-          ldd "$HERE/usr/bin/emacs" >> "$LOGFILE" 2>&1
+          LD_PRELOAD="$HERE/usr/lib/libc.so.6:$HERE/usr/lib/libdl.so.2" ldd "$HERE/usr/bin/emacs" >> "$LOGFILE" 2>&1
           echo "Launching Emacs..." >> "$LOGFILE"
-          "$HERE/usr/bin/emacs" "$@" 2>>"$LOGFILE"
+          LD_PRELOAD="$HERE/usr/lib/libc.so.6:$HERE/usr/lib/libdl.so.2" "$HERE/usr/bin/emacs" "$@" 2>>"$LOGFILE"
           EXIT_CODE=$?
           echo "Emacs exited with code $EXIT_CODE" >> "$LOGFILE"
           exit $EXIT_CODE
