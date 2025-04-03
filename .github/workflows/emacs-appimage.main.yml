@@ -89,7 +89,7 @@ jobs:
       - name: Create AppRun
         run: |
           cat << 'EOF' > /tmp/appdir/AppRun
-          #!/bin/bash
+          #!/bin/sh
           HERE="$(dirname "$(readlink -f "${0}")")"
           export PATH="$HERE/usr/local/bin:$HERE/usr/bin:$HERE/bin:$HERE/usr/games:$HERE/sbin:$HERE/usr/sbin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:$PATH"
           export LD_LIBRARY_PATH="$HERE/usr/lib"
