@@ -1,4 +1,4 @@
-name: Build Emacs AppImage
+name: Build Static Emacs Binary
 
 on:
   workflow_dispatch:
@@ -10,120 +10,63 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install build dependencies
         run: |
           sudo apt update
           sudo apt install -y \
-            build-essential git wget libfuse3-dev \
-            autoconf automake libtool pkg-config make \
-            libncurses-dev libgnutls28-dev libxml2-dev \
-            libjansson-dev libpcre2-dev libsqlite3-dev \
-            zlib1g-dev texinfo nettle-dev \
-            libcap-dev libicu-dev libffi-dev libattr1-dev \
-            liblzma-dev libdbus-1-dev libselinux1-dev libidn2-dev \
-            libgpg-error-dev glib-networking xterm
+            build-essential git wget autoconf automake libtool pkg-config make texinfo \
+            libncurses-dev libgnutls28-dev libxml2-dev libjansson-dev libpcre2-dev \
+            libsqlite3-dev zlib1g-dev libcap-dev libffi-dev liblzma-dev libidn2-dev \
+            libtasn1-dev nettle-dev libunistring-dev libgpg-error-dev libgcrypt20-dev \
+            libssl-dev
+
       - name: Clone Emacs source
         run: |
-          git clone https://git.savannah.gnu.org/git/emacs.git
-          
-      - name: Build Emacs
-        working-directory: emacs
+          git clone --depth 1 --branch master https://github.com/emacs-mirror/emacs.git emacs-src
+
+      - name: Configure and build mostly-static Emacs
+        working-directory: emacs-src
         run: |
           ./autogen.sh
           ./configure \
-            --prefix=/tmp/appdir/usr \
-            --with-sound=no \
-            --with-native-compilation=no \
-            --without-imagemagick \
-            --without-mailutils \
+            --prefix=/tmp/emacs-static/usr \
+            --without-x \
+            --without-xpm --without-jpeg --without-png --without-gif --without-tiff \
+            --without-toolkit-scroll-bars --without-x-toolkit \
+            --without-gsettings --without-dbus --without-gconf --without-selinux \
+            --without-sound --without-imagemagick --without-xwidgets \
             --with-gnutls \
-            --without-x
-          make bootstrap
+            --with-modules=ifavailable \
+            --without-compress-install \
+            --enable-static \
+            --disable-shared \
+            LDFLAGS="-static" \
+            CFLAGS="-O2 -g -fno-omit-frame-pointer"
+          make bootstrap -j$(nproc)
           make -j$(nproc)
           make install
-          rm -f /tmp/appdir/usr/bin/emacsclient
-      - name: Bundle additional data files
+
+      - name: Verify the built binary
         run: |
-          mkdir -p /tmp/appdir/usr/share/emacs/30.2
-          mkdir -p /tmp/appdir/usr/libexec/emacs/30.2/x86_64-pc-linux-gnu
-          cp -r /tmp/appdir/usr/libexec/emacs/30.2/x86_64-pc-linux-gnu/* /tmp/appdir/usr/libexec/emacs/30.2/x86_64-pc-linux-gnu/ || true
-          cp -r /tmp/appdir/usr/share/emacs/30.2/etc /tmp/appdir/usr/share/emacs/30.2/ || true
-          cp -r /tmp/appdir/usr/share/emacs/30.2/lisp /tmp/appdir/usr/share/emacs/30.2/ || true
-      - name: Bundle libraries
+          /tmp/emacs-static/usr/bin/emacs --version
+          file /tmp/emacs-static/usr/bin/emacs
+          ldd /tmp/emacs-static/usr/bin/emacs || true
+
+      - name: Prepare artifact directory
         run: |
-          mkdir -p /tmp/appdir/usr/lib
-          for lib in \
-            libncurses.so.6 libgnutls.so.30 libxml2.so.2 libjansson.so.4 \
-            libpcre2-8.so.0 libsqlite3.so.0 libz.so.1 libtinfo.so.6 \
-            libunistring.so.2 libtasn1.so.6 libnettle.so.7 libhogweed.so.5 \
-            libcap.so.2 libicudata.so.66 libicuuc.so.66 libffi.so.7 \
-            libattr.so.1 liblzma.so.5 libdbus-1.so.3 libp11-kit.so.0 \
-            libselinux.so.1 libidn2.so.0 libdl.so.2 \
-            libacl.so.1 libsystemd.so.0 \
-            libgmp.so.10 libgio-2.0.so.0 libglib-2.0.so.0 \
-            libgmodule-2.0.so.0 libgobject-2.0.so.0 libgpg-error.so.0; do
-            cp -v /usr/lib/x86_64-linux-gnu/$lib /tmp/appdir/usr/lib/ 2>/dev/null || \
-            cp -v /lib/x86_64-linux-gnu/$lib /tmp/appdir/usr/lib/ 2>/dev/null || \
-            echo "Warning: $lib not found"
-          done
-          cp -r /usr/lib/x86_64-linux-gnu/gio/modules/* /tmp/appdir/usr/lib/ 2>/dev/null || true
-      - name: Download linuxdeployqt and appimagetool
-        run: |
-          wget -c https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -O linuxdeployqt
-          wget -c https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
-          chmod +x linuxdeployqt appimagetool
-      - name: Create AppRun
-        run: |
-          cat << 'EOF' > /tmp/appdir/AppRun
-          #!/bin/bash
-          HERE="$(dirname "$(readlink -f "${0}")")"
-          export PATH="$HERE/usr/local/bin:$HERE/usr/bin:$HERE/bin:$HERE/usr/games:$HERE/sbin:$HERE/usr/sbin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:$PATH"
-          export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
-          export GIO_MODULE_DIR="$HERE/usr/lib"
-          LOGFILE="$HOME/emacs-appimage-run.log"
-          export EMACSDATA="$HERE/usr/share/emacs/30.1/etc"
-          export EMACSLOADPATH="$HERE/usr/share/emacs/30.1/lisp"
-          export EMACSDOC="$HERE/usr/share/emacs/30.1/etc"
-          echo "Starting Emacs..." >> "$LOGFILE"
-          echo "PATH: $PATH" >> "$LOGFILE"
-          echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH" >> "$LOGFILE"
-          echo "GIO_MODULE_DIR: $GIO_MODULE_DIR" >> "$LOGFILE"
-          echo "Checking dependencies..." >> "$LOGFILE"
-          ldd "$HERE/usr/bin/emacs" >> "$LOGFILE" 2>&1
-          echo "Launching Emacs..." >> "$LOGFILE"
-          "$HERE/usr/bin/emacs" "$@" 2>>"$LOGFILE"
-          EXIT_CODE=$?
-          echo "Emacs exited with code $EXIT_CODE" >> "$LOGFILE"
-          exit $EXIT_CODE
-          EOF
-          chmod +x /tmp/appdir/AppRun
-      - name: Create desktop file
-        run: |
-          cat << 'EOF' > /tmp/appdir/emacs.desktop
-          [Desktop Entry]
-          Name=Emacs (Terminal)
-          Exec=emacs
-          Type=Application
-          Icon=emacs
-          Categories=Utility;TextEditor;TerminalEmulator;
-          Terminal=true
-          EOF
-      - name: Copy icon
-        run: |
-          wget -O /tmp/appdir/emacs.png "https://upload.wikimedia.org/wikipedia/commons/5/51/Emacs-logo.png" || echo "Icon download failed"
-          chmod 644 /tmp/appdir/emacs.png
-      - name: Bundle with linuxdeployqt
-        run: |
-          ./linuxdeployqt /tmp/appdir/usr/bin/emacs -bundle-non-qt-libs -unsupported-allow-new-glibc -verbose=2
-      - name: Package AppImage
-        run: |
-          ./appimagetool --no-appstream -v /tmp/appdir emacs-x86_64.AppImage
-      - name: Upload AppImage
+          mkdir -p artifact
+          cp /tmp/emacs-static/usr/bin/emacs artifact/emacs-static
+          cp -r /tmp/emacs-static/usr/share/emacs artifact/share || true
+
+      - name: Upload static Emacs artifact
         uses: actions/upload-artifact@v4
         with:
-          name: emacs-appimage
-          path: emacs-x86_64.AppImage
+          name: emacs-static-binary
+          path: artifact/
+          retention-days: 14
+          compression-level: 6
