@@ -16,7 +16,7 @@ Welcome to the unofficial Emacs AppImage—a portable, terminal-only build of [E
 ## Usage
 
 1. **Download the AppImage**:
-   - Grab it from the [Releases page](https://github.com/danrobi11/emacs-appimage/releases).
+   - Grab it from the [Releases page](https://github.com/danrobi11/emacs-appimage/releases/tag/void.30.1).
 
 2. **Make it Executable**:
    ```bash
