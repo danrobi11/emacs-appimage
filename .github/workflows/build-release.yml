@@ -37,7 +37,7 @@ jobs:
           ./configure \
             --build=x86_64-pc-linux-gnu \
             --host=x86_64-pc-linux-gnu \
-            --prefix=/tmp/emacs-dynamic/usr \
+            --prefix=$HOME/.local \   # ← Changed: use real user prefix
             --without-x \
             --without-xpm \
             --without-jpeg \
@@ -62,8 +62,9 @@ jobs:
             CFLAGS="-O2 -g -fno-omit-frame-pointer"
           make bootstrap -j$(nproc)
           make -j$(nproc)
-          mkdir -p /tmp/emacs-dynamic/usr/libexec/emacs/31.0.50/x86_64-pc-linux-gnu
-          src/temacs -Q --batch --eval "(dump-emacs-portable \"/tmp/emacs-dynamic/usr/libexec/emacs/31.0.50/x86_64-pc-linux-gnu/emacs.pdmp\")"
+          # Dump using the final prefix path
+          mkdir -p $HOME/.local/libexec/emacs/31.0.50/x86_64-pc-linux-gnu
+          src/temacs -Q --batch --eval "(dump-emacs-portable \"$HOME/.local/libexec/emacs/31.0.50/x86_64-pc-linux-gnu/emacs.pdmp\")"
           make install
 
       - name: Verify the built binary
@@ -74,21 +75,11 @@ jobs:
 
       - name: Prepare artifact directory
         run: |
-          mkdir -p artifact/bin
-          cp /tmp/emacs-dynamic/usr/bin/emacs artifact/bin/emacs
-          mkdir -p artifact/lib
-          cp /lib/x86_64-linux-gnu/libtinfo.so.6 \
-             /lib/x86_64-linux-gnu/libncursesw.so.6 \
-             /usr/lib/x86_64-linux-gnu/libgnutls.so.30 \
-             /usr/lib/x86_64-linux-gnu/libnettle.so.8 \
-             /usr/lib/x86_64-linux-gnu/libhogweed.so.6 \
-             /usr/lib/x86_64-linux-gnu/libunistring.so.2 \
-             artifact/lib/ 2>/dev/null || true
-          mkdir -p artifact/share
-          cp -r /tmp/emacs-dynamic/usr/share/emacs artifact/share || true
-          mkdir -p artifact/libexec/emacs/31.0.50/x86_64-pc-linux-gnu
-          cp -r /tmp/emacs-dynamic/usr/libexec/emacs/31.0.50/x86_64-pc-linux-gnu/* \
-             artifact/libexec/emacs/31.0.50/x86_64-pc-linux-gnu/ || true
+          mkdir -p artifact
+          cp -r $HOME/.local/bin/emacs artifact/emacs
+          cp -r $HOME/.local/lib artifact/lib || true
+          cp -r $HOME/.local/libexec artifact/libexec || true
+          cp -r $HOME/.local/share artifact/share || true
       - name: Upload dynamic Emacs artifact
         uses: actions/upload-artifact@v4
         with:
