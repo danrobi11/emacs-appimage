@@ -34,6 +34,7 @@ jobs:
         run: |
           ./autogen.sh
           ./configure \
+            --build=x86_64-pc-linux-gnu \     # ← Added: explicitly set build triplet
             --prefix=/tmp/emacs-static/usr \
             --without-x \
             --without-xpm --without-jpeg --without-png --without-gif --without-tiff \
@@ -43,7 +44,7 @@ jobs:
             --with-gnutls \
             --with-modules=ifavailable \
             --without-compress-install \
-            --without-lcms2 \              # ← Added: disables lcms2 detection/linking
+            --without-lcms2 \
             --enable-static \
             --disable-shared \
             LDFLAGS="-static" \
