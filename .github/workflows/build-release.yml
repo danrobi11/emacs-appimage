@@ -45,7 +45,6 @@ jobs:
             --without-gif \
             --without-tiff \
             --without-toolkit-scroll-bars \
-            --without-x-toolkit \
             --with-x-toolkit=no \
             --without-gsettings \
             --without-dbus \
@@ -57,6 +56,7 @@ jobs:
             --with-gnutls \
             --with-modules=ifavailable \
             --without-compress-install \
+            --without-native-compilation \
             --without-lcms2 \
             --with-pdumper=yes \
             CFLAGS="-O2 -g -fno-omit-frame-pointer"
