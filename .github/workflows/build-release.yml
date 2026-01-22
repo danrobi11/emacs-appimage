@@ -43,6 +43,7 @@ jobs:
             --with-gnutls \
             --with-modules=ifavailable \
             --without-compress-install \
+            --without-lcms2 \              # ← Added: disables lcms2 detection/linking
             --enable-static \
             --disable-shared \
             LDFLAGS="-static" \
