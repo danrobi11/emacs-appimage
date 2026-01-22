@@ -29,10 +29,10 @@ jobs:
       - name: Clone Emacs source
         run: |
           git clone https://git.savannah.gnu.org/git/emacs.git
-          cd emacs
+          
       - name: Build Emacs
+        working-directory: emacs
         run: |
-          cd emacs
           ./autogen.sh
           ./configure \
             --prefix=/tmp/appdir/usr \
