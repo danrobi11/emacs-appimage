@@ -36,6 +36,7 @@ jobs:
           autoreconf -fi
           ./configure \
             --build=x86_64-pc-linux-gnu \
+            --host=x86_64-pc-linux-gnu \           # ← Add this line
             --prefix=/tmp/emacs-dynamic/usr \
             --without-x \
             --without-xpm --without-jpeg --without-png --without-gif --without-tiff \
@@ -46,11 +47,10 @@ jobs:
             --with-modules=ifavailable \
             --without-compress-install \
             --without-lcms2 \
-            --with-pdumper=yes \  # Explicitly enable (though usually default)
+            --with-pdumper=yes \
             CFLAGS="-O2 -g -fno-omit-frame-pointer"
           make bootstrap -j$(nproc)
           make -j$(nproc)
-          # Dump explicitly using temacs and place pdmp where install expects it
           mkdir -p /tmp/emacs-dynamic/usr/libexec/emacs/31.0.50/x86_64-pc-linux-gnu
           src/temacs -Q --batch --eval "(dump-emacs-portable \"/tmp/emacs-dynamic/usr/libexec/emacs/31.0.50/x86_64-pc-linux-gnu/emacs.pdmp\")"
           make install
