@@ -39,10 +39,14 @@ jobs:
             --host=x86_64-pc-linux-gnu \
             --prefix=/tmp/emacs-dynamic/usr \
             --without-x \
-            --without-xpm --without-jpeg --without-png --without-gif --without-tiff \
+            --without-xpm \
+            --without-jpeg \
+            --without-png \
+            --without-gif \
+            --without-tiff \
             --without-toolkit-scroll-bars \
             --without-x-toolkit \
-            --with-x-toolkit=no \           # ← This line is required to bypass toolkit check
+            --with-x-toolkit=no \
             --without-gsettings \
             --without-dbus \
             --without-gconf \
