@@ -22,7 +22,7 @@ jobs:
             autoconf automake libtool pkg-config make \
             libncurses-dev libgnutls28-dev libxml2-dev \
             libjansson-dev libpcre2-dev libsqlite3-dev \
-            zlib1g-dev texinfo nettle-dev libhogweed-dev \
+            zlib1g-dev texinfo nettle-dev \
             libcap-dev libicu-dev libffi-dev libattr1-dev \
             liblzma-dev libdbus-1-dev libselinux1-dev libidn2-dev \
             libgpg-error-dev glib-networking xterm
