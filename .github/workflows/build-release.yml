@@ -36,13 +36,20 @@ jobs:
           autoreconf -fi
           ./configure \
             --build=x86_64-pc-linux-gnu \
-            --host=x86_64-pc-linux-gnu \           # ← Add this line
+            --host=x86_64-pc-linux-gnu \
             --prefix=/tmp/emacs-dynamic/usr \
             --without-x \
             --without-xpm --without-jpeg --without-png --without-gif --without-tiff \
-            --without-toolkit-scroll-bars --without-x-toolkit \
-            --without-gsettings --without-dbus --without-gconf --without-selinux \
-            --without-sound --without-imagemagick --without-xwidgets \
+            --without-toolkit-scroll-bars \
+            --without-x-toolkit \
+            --with-x-toolkit=no \           # ← This line is required to bypass toolkit check
+            --without-gsettings \
+            --without-dbus \
+            --without-gconf \
+            --without-selinux \
+            --without-sound \
+            --without-imagemagick \
+            --without-xwidgets \
             --with-gnutls \
             --with-modules=ifavailable \
             --without-compress-install \
