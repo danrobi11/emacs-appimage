@@ -124,5 +124,5 @@ These libraries are copied into `$APPDIR/usr/lib/` to ensure the AppImage runs s
 
 Disclaimer
 
-This repository contains a script for building the emacs-30.1-x86_64.AppImage. The script was created with assistance from Grok 3, an AI developed by xAI (https://grok.com). While efforts have been made to ensure the script functions correctly, it is provided "as is" without any warranties or guarantees of performance, reliability, or compatibility. Users are responsible for testing and verifying the script's output before use. Neither the repository owner nor xAI is liable for any issues, damages, or data loss that may arise from using this script or the resulting AppImage.
+This repository contains a [script](https://github.com/danrobi11/emacs-appimage/blob/main/.gitignore/emacs-appimage.sh) for building the emacs-30.1-x86_64.AppImage. The script was created with assistance from Grok 3, an AI developed by xAI (https://grok.com). While efforts have been made to ensure the script functions correctly, it is provided "as is" without any warranties or guarantees of performance, reliability, or compatibility. Users are responsible for testing and verifying the script's output before use. Neither the repository owner nor xAI is liable for any issues, damages, or data loss that may arise from using this script or the resulting AppImage.
 
