@@ -46,9 +46,11 @@ jobs:
             --with-modules=ifavailable \
             --without-compress-install \
             --without-lcms2 \
+            --with-pdumper \
             CFLAGS="-O2 -g -fno-omit-frame-pointer"
           make bootstrap -j$(nproc)
           make -j$(nproc)
+          src/emacs -Q --batch --eval "(dump-emacs-portable \"emacs.pdmp\")"
           make install
 
       - name: Verify the built binary
