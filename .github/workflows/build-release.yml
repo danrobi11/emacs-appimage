@@ -1,4 +1,4 @@
-name: Build Static Emacs Binary
+name: Build Dynamic Terminal Emacs Binary
 
 on:
   workflow_dispatch:
@@ -29,14 +29,14 @@ jobs:
         run: |
           git clone --depth 1 --branch master https://github.com/emacs-mirror/emacs.git emacs-src
 
-      - name: Configure and build mostly-static Emacs
+      - name: Configure and build dynamic Emacs
         working-directory: emacs-src
         run: |
           ./autogen.sh
-          autoreconf -fi                     # ← Added: forces full autotools regeneration
+          autoreconf -fi
           ./configure \
             --build=x86_64-pc-linux-gnu \
-            --prefix=/tmp/emacs-static/usr \
+            --prefix=/tmp/emacs-dynamic/usr \
             --without-x \
             --without-xpm --without-jpeg --without-png --without-gif --without-tiff \
             --without-toolkit-scroll-bars --without-x-toolkit \
@@ -46,9 +46,6 @@ jobs:
             --with-modules=ifavailable \
             --without-compress-install \
             --without-lcms2 \
-            --enable-static \
-            --disable-shared \
-            LDFLAGS="-static" \
             CFLAGS="-O2 -g -fno-omit-frame-pointer"
           make bootstrap -j$(nproc)
           make -j$(nproc)
@@ -56,20 +53,21 @@ jobs:
 
       - name: Verify the built binary
         run: |
-          /tmp/emacs-static/usr/bin/emacs --version
-          file /tmp/emacs-static/usr/bin/emacs
-          ldd /tmp/emacs-static/usr/bin/emacs || true
+          /tmp/emacs-dynamic/usr/bin/emacs --version
+          file /tmp/emacs-dynamic/usr/bin/emacs
+          ldd /tmp/emacs-dynamic/usr/bin/emacs
 
       - name: Prepare artifact directory
         run: |
-          mkdir -p artifact
-          cp /tmp/emacs-static/usr/bin/emacs artifact/emacs-static
-          cp -r /tmp/emacs-static/usr/share/emacs artifact/share || true
+          mkdir -p artifact/bin
+          cp /tmp/emacs-dynamic/usr/bin/emacs artifact/bin/emacs
+          mkdir -p artifact/share
+          cp -r /tmp/emacs-dynamic/usr/share/emacs artifact/share || true
 
-      - name: Upload static Emacs artifact
+      - name: Upload dynamic Emacs artifact
         uses: actions/upload-artifact@v4
         with:
-          name: emacs-static-binary
+          name: emacs-dynamic-binary
           path: artifact/
           retention-days: 14
           compression-level: 6
