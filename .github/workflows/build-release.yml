@@ -61,6 +61,15 @@ jobs:
         run: |
           mkdir -p artifact/bin
           cp /tmp/emacs-dynamic/usr/bin/emacs artifact/bin/emacs
+          mkdir -p artifact/lib
+          # Copy critical libraries that differ across distros (ncurses/tinfo, gnutls, etc.)
+          cp /lib/x86_64-linux-gnu/libtinfo.so.6 \
+             /lib/x86_64-linux-gnu/libncursesw.so.6 \
+             /usr/lib/x86_64-linux-gnu/libgnutls.so.30 \
+             /usr/lib/x86_64-linux-gnu/libnettle.so.8 \
+             /usr/lib/x86_64-linux-gnu/libhogweed.so.6 \
+             /usr/lib/x86_64-linux-gnu/libunistring.so.2 \
+             artifact/lib/ 2>/dev/null || true
           mkdir -p artifact/share
           cp -r /tmp/emacs-dynamic/usr/share/emacs artifact/share || true
 
