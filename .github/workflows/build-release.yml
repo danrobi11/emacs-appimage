@@ -33,8 +33,9 @@ jobs:
         working-directory: emacs-src
         run: |
           ./autogen.sh
+          autoreconf -fi                     # ← Added: forces full autotools regeneration
           ./configure \
-            --build=x86_64-pc-linux-gnu \     # ← Added: explicitly set build triplet
+            --build=x86_64-pc-linux-gnu \
             --prefix=/tmp/emacs-static/usr \
             --without-x \
             --without-xpm --without-jpeg --without-png --without-gif --without-tiff \
