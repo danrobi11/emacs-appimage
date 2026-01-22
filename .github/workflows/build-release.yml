@@ -63,8 +63,14 @@ jobs:
             CFLAGS="-O2 -g -fno-omit-frame-pointer"
           make bootstrap -j$(nproc)
           make -j$(nproc)
-          mkdir -p $HOME/.local/libexec/emacs/31.0.50/x86_64-pc-linux-gnu
-          src/temacs -Q --batch --eval "(dump-emacs-portable \"$HOME/.local/libexec/emacs/31.0.50/x86_64-pc-linux-gnu/emacs.pdmp\")"
+
+          # Automatically detect the Emacs version (e.g., 31.0.50)
+          EMACS_VERSION=$(src/emacs --version | head -1 | awk '{print $NF}')
+
+          # Create version-specific libexec directory and dump the portable file
+          mkdir -p $HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu
+          src/temacs -Q --batch --eval "(dump-emacs-portable \"$HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu/emacs.pdmp\")"
+
           make install
 
       - name: Verify the built binary
@@ -75,11 +81,12 @@ jobs:
 
       - name: Prepare artifact directory
         run: |
-          mkdir -p artifact
-          cp -r $HOME/.local/bin/emacs artifact/emacs
+          mkdir -p artifact/bin
+          cp -r $HOME/.local/bin/* artifact/bin/
           cp -r $HOME/.local/lib artifact/lib || true
           cp -r $HOME/.local/libexec artifact/libexec || true
           cp -r $HOME/.local/share artifact/share || true
+
       - name: Upload dynamic Emacs artifact
         uses: actions/upload-artifact@v4
         with:
