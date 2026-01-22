@@ -46,11 +46,13 @@ jobs:
             --with-modules=ifavailable \
             --without-compress-install \
             --without-lcms2 \
-            --with-pdumper \
+            --with-pdumper=yes \  # Explicitly enable (though usually default)
             CFLAGS="-O2 -g -fno-omit-frame-pointer"
           make bootstrap -j$(nproc)
           make -j$(nproc)
-          src/emacs -Q --batch --eval "(dump-emacs-portable \"emacs.pdmp\")"
+          # Dump explicitly using temacs and place pdmp where install expects it
+          mkdir -p /tmp/emacs-dynamic/usr/libexec/emacs/31.0.50/x86_64-pc-linux-gnu
+          src/temacs -Q --batch --eval "(dump-emacs-portable \"/tmp/emacs-dynamic/usr/libexec/emacs/31.0.50/x86_64-pc-linux-gnu/emacs.pdmp\")"
           make install
 
       - name: Verify the built binary
@@ -64,7 +66,6 @@ jobs:
           mkdir -p artifact/bin
           cp /tmp/emacs-dynamic/usr/bin/emacs artifact/bin/emacs
           mkdir -p artifact/lib
-          # Copy critical libraries that differ across distros (ncurses/tinfo, gnutls, etc.)
           cp /lib/x86_64-linux-gnu/libtinfo.so.6 \
              /lib/x86_64-linux-gnu/libncursesw.so.6 \
              /usr/lib/x86_64-linux-gnu/libgnutls.so.30 \
@@ -74,9 +75,9 @@ jobs:
              artifact/lib/ 2>/dev/null || true
           mkdir -p artifact/share
           cp -r /tmp/emacs-dynamic/usr/share/emacs artifact/share || true
-          mkdir -p artifact/libexec  # ← Added: copy arch-dependent directory
-          cp -r /tmp/emacs-dynamic/usr/libexec/emacs artifact/libexec || true
-
+          mkdir -p artifact/libexec/emacs/31.0.50/x86_64-pc-linux-gnu
+          cp -r /tmp/emacs-dynamic/usr/libexec/emacs/31.0.50/x86_64-pc-linux-gnu/* \
+             artifact/libexec/emacs/31.0.50/x86_64-pc-linux-gnu/ || true
       - name: Upload dynamic Emacs artifact
         uses: actions/upload-artifact@v4
         with:
