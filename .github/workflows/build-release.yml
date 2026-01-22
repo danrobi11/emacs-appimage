@@ -74,6 +74,8 @@ jobs:
              artifact/lib/ 2>/dev/null || true
           mkdir -p artifact/share
           cp -r /tmp/emacs-dynamic/usr/share/emacs artifact/share || true
+          mkdir -p artifact/libexec  # ← Added: copy arch-dependent directory
+          cp -r /tmp/emacs-dynamic/usr/libexec/emacs artifact/libexec || true
 
       - name: Upload dynamic Emacs artifact
         uses: actions/upload-artifact@v4
