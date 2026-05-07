@@ -1,96 +1,96 @@
 name: Build Dynamic Terminal Emacs Binary
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+workflow_dispatch:
+push:
+branches: [ main ]
+pull_request:
+branches: [ main ]
 
 jobs:
-  build:
-    runs-on: ubuntu-24.04
+build:
+runs-on: ubuntu-24.04
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+steps:
+- name: Checkout repository
+uses: actions/checkout@v6
 
-      - name: Install build dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            build-essential git wget autoconf automake libtool pkg-config make texinfo \
-            libncurses-dev libgnutls28-dev libxml2-dev libjansson-dev libpcre2-dev \
-            libsqlite3-dev zlib1g-dev libcap-dev libffi-dev liblzma-dev libidn2-dev \
-            libtasn1-dev nettle-dev libunistring-dev libgpg-error-dev libgcrypt20-dev \
-            libssl-dev
+- name: Install build dependencies
+run: |
+sudo apt update
+sudo apt install -y \
+build-essential git wget autoconf automake libtool pkg-config make texinfo \
+libncurses-dev libgnutls28-dev libxml2-dev libjansson-dev libpcre2-dev \
+libsqlite3-dev zlib1g-dev libcap-dev libffi-dev liblzma-dev libidn2-dev \
+libtasn1-dev nettle-dev libunistring-dev libgpg-error-dev libgcrypt20-dev \
+libssl-dev
 
-      - name: Clone Emacs source
-        run: |
-          git clone --depth 1 --branch master https://github.com/emacs-mirror/emacs.git emacs-src
+- name: Clone Emacs source
+run: |
+git clone --depth 1 --branch master https://github.com/emacs-mirror/emacs.git emacs-src
 
-      - name: Configure and build dynamic Emacs
-        working-directory: emacs-src
-        run: |
-          ./autogen.sh
-          autoreconf -fi
-          ./configure \
-            --build=x86_64-pc-linux-gnu \
-            --host=x86_64-pc-linux-gnu \
-            --prefix=$HOME/.local \
-            --without-x \
-            --without-xpm \
-            --without-jpeg \
-            --without-png \
-            --without-gif \
-            --without-tiff \
-            --without-toolkit-scroll-bars \
-            --without-x-toolkit \
-            --with-x-toolkit=no \
-            --without-gsettings \
-            --without-dbus \
-            --without-gconf \
-            --without-selinux \
-            --without-sound \
-            --without-imagemagick \
-            --without-xwidgets \
-            --with-gnutls \
-            --with-modules=ifavailable \
-            --without-compress-install \
-            --without-native-compilation \
-            --without-lcms2 \
-            --with-pdumper=yes \
-            CFLAGS="-O2 -g -fno-omit-frame-pointer"
-          make bootstrap -j$(nproc)
-          make -j$(nproc)
+- name: Configure and build dynamic Emacs
+working-directory: emacs-src
+run: |
+./autogen.sh
+autoreconf -fi
+./configure \
+--build=x86_64-pc-linux-gnu \
+--host=x86_64-pc-linux-gnu \
+--prefix=$HOME/.local \
+--without-x \
+--without-xpm \
+--without-jpeg \
+--without-png \
+--without-gif \
+--without-tiff \
+--without-toolkit-scroll-bars \
+--without-x-toolkit \
+--with-x-toolkit=no \
+--without-gsettings \
+--without-dbus \
+--without-gconf \
+--without-selinux \
+--without-sound \
+--without-imagemagick \
+--without-xwidgets \
+--with-gnutls \
+--with-modules \
+--without-compress-install \
+--without-native-compilation \
+--without-lcms2 \
+--with-pdumper=yes \
+CFLAGS="-O2 -g -fno-omit-frame-pointer"
+make bootstrap -j$(nproc)
+make -j$(nproc)
 
-          # Automatically detect the Emacs version (e.g., 31.0.50)
-          EMACS_VERSION=$(src/emacs --version | head -1 | awk '{print $NF}')
+# Automatically detect the Emacs version (e.g., 31.0.50)
+EMACS_VERSION=$(src/emacs --version | head -1 | awk '{print $NF}')
 
-          # Create version-specific libexec directory and dump the portable file
-          mkdir -p $HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu
-          src/temacs -Q --batch --eval "(dump-emacs-portable \"$HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu/emacs.pdmp\")"
+# Create version-specific libexec directory and dump the portable file
+mkdir -p $HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu
+src/temacs -Q --batch --eval "(dump-emacs-portable \"$HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu/emacs.pdmp\")"
 
-          make install
+make install
 
-      - name: Verify the built binary
-        run: |
-          $HOME/.local/bin/emacs --version
-          file $HOME/.local/bin/emacs
-          ldd $HOME/.local/bin/emacs
+- name: Verify the built binary
+run: |
+$HOME/.local/bin/emacs --version
+file $HOME/.local/bin/emacs
+ldd $HOME/.local/bin/emacs
 
-      - name: Prepare artifact directory
-        run: |
-          mkdir -p artifact/bin
-          cp -r $HOME/.local/bin/* artifact/bin/
-          cp -r $HOME/.local/lib artifact/lib || true
-          cp -r $HOME/.local/libexec artifact/libexec || true
-          cp -r $HOME/.local/share artifact/share || true
+- name: Prepare artifact directory
+run: |
+mkdir -p artifact/bin
+cp -r $HOME/.local/bin/* artifact/bin/
+cp -r $HOME/.local/lib artifact/lib || true
+cp -r $HOME/.local/libexec artifact/libexec || true
+cp -r $HOME/.local/share artifact/share || true
 
-      - name: Upload dynamic Emacs artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: emacs-dynamic-binary
-          path: artifact/
-          retention-days: 14
-          compression-level: 6
+- name: Upload dynamic Emacs artifact
+uses: actions/upload-artifact@v7
+with:
+name: emacs-dynamic-binary
+path: artifact/
+retention-days: 14
+compression-level: 6
