@@ -23,50 +23,49 @@ jobs:
       - name: Clone Emacs source
         run: |
           git clone --depth 1 --branch master https://github.com/emacs-mirror/emacs.git emacs-src
-      - name: Configure and build dynamic Emacs
-        working-directory: emacs-src
-        run: |
-          ./autogen.sh
-          autoreconf -fi
-          ./configure \
-            --build=x86_64-pc-linux-gnu \
-            --host=x86_64-pc-linux-gnu \
-            --prefix=$HOME/.local \
-            --without-x \
-            --without-xpm \
-            --without-jpeg \
-            --without-png \
-            --without-gif \
-            --without-tiff \
-            --without-toolkit-scroll-bars \
-            --without-x-toolkit \
-            --with-x-toolkit=no \
-            --without-gsettings \
-            --without-dbus \
-            --without-gconf \
-            --without-selinux \
-            --without-sound \
-            --without-imagemagick \
-            --without-xwidgets \
-            --with-gnutls \
-            --with-modules \
-            --without-compress-install \
-            --without-native-compilation \
-            --without-lcms2 \
-            --with-pdumper=yes \
-            CFLAGS="-O2 -g -fno-omit-frame-pointer"
+- name: Configure and build dynamic Emacs
+  working-directory: emacs-src
+  run: |
+    ./autogen.sh
+    autoreconf -fi
+    ./configure \
+      --build=x86_64-pc-linux-gnu \
+      --host=x86_64-pc-linux-gnu \
+      --prefix=$HOME/.local \
+      --without-x \
+      --without-xpm \
+      --without-jpeg \
+      --without-png \
+      --without-gif \
+      --without-tiff \
+      --without-toolkit-scroll-bars \
+      --without-x-toolkit \
+      --with-x-toolkit=no \
+      --without-gsettings \
+      --without-dbus \
+      --without-gconf \
+      --without-selinux \
+      --without-sound \
+      --without-imagemagick \
+      --without-xwidgets \
+      --with-gnutls \
+      --without-modules \
+      --without-compress-install \
+      --without-native-compilation \
+      --without-lcms2 \
+      --with-pdumper=yes \
+      CFLAGS="-O2 -g -fno-omit-frame-pointer"
+    make bootstrap -j$(nproc)
+    make -j$(nproc)
 
-          make bootstrap -j$(nproc)
-          make -j$(nproc)
+    # Automatically detect the Emacs version (e.g., 31.0.50)
+    EMACS_VERSION=$(src/emacs --version | head -1 | awk '{print $NF}')
 
-          # Automatically detect the Emacs version (e.g., 31.0.50)
-          EMACS_VERSION=$(src/emacs --version | head -1 | awk '{print $NF}')
+    # Create version-specific libexec directory and dump the portable file
+    mkdir -p $HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu
+    src/temacs -Q --batch --eval "(dump-emacs-portable \"$HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu/emacs.pdmp\")"
 
-          # Create version-specific libexec directory and dump the portable file
-          mkdir -p $HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu
-          src/temacs -Q --batch --eval "(dump-emacs-portable \"$HOME/.local/libexec/emacs/$EMACS_VERSION/x86_64-pc-linux-gnu/emacs.pdmp\")"
-
-          make install
+    make install
       - name: Verify the built binary
         run: |
           $HOME/.local/bin/emacs --version
